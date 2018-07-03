@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 
 # 客户信息
 class Custormer(models.Model):
+    user = models.OneToOneField(User)
     username = models.CharField(default='名称',max_length=20, help_text='客户名称')
     email = models.CharField(default='', max_length=30, null=True, blank=True, help_text='邮箱')
     company = models.CharField(default='', max_length=40, null=True, help_text='公司名称')
@@ -24,9 +25,10 @@ class Custormer(models.Model):
 
 # 用户信息表
 class UserInfo(models.Model):
+    user = models.OneToOneField(User)
     name = models.CharField(default='姓名',max_length=15,null=True,blank=True,help_text='姓名')
     age = models.IntegerField(default=1, help_text='年龄')
-    gender = models.BooleanField(default='male',max_length=18, help_text='性别')
+    gender = models.BooleanField(default=True,max_length=18, help_text='性别')
     phone = models.CharField(default='', max_length=16,blank=True, null=True, help_text="手机号码")
     email = models.EmailField(default='',blank=True,null=True,help_text='邮箱')
     address = models.CharField(default='', max_length=256, blank=True, null=True, help_text="地址")
@@ -93,6 +95,7 @@ class DealRecord(models.Model):
 
 # 管理员
 class Administrator(models.Model):
+    user = models.OneToOneField(User)
     username = models.CharField(default='姓名', max_length=20, help_text='姓名')
     password = models.CharField(default='',max_length=20, help_text='密码')
 
@@ -136,3 +139,4 @@ class JoinQuestion(models.Model):
 class Iterm(models.Model):
     userinfo = models.ForeignKey('UserInfo', help_text='关联用户')
     questionItem = models.ForeignKey('QuestionItem', help_text='关联选项')
+
