@@ -12,7 +12,6 @@ from myapp.models import *
 class Rest(object):
     def __init__(self, name=None):
         self.name = name or self.__class__.__name__.lower()
-
     # 定义一个方法，用于绑定到url中
     @csrf_exempt
     def enter(self, request, *args, **kwargs):
