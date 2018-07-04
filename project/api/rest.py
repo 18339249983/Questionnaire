@@ -89,6 +89,7 @@ class UserRest(Rest):
         if user.is_authenticated:
             # 获取信息
             data=dict()
+            # 有坑，定义表时，表名为custormer 正确的是customer，涉及到此表的都要注意
             if hasattr(user,'custormer'):
                 custome=user.custormer
                 data['username']=custome.username
