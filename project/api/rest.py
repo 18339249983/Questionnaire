@@ -5,6 +5,8 @@ from django.http.response import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf.urls import url
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, logout, login
+
 
 from api.utils import *
 from myapp.models import *
@@ -50,7 +52,6 @@ class Register(object):
         self.resources=[]
     def regist(self, resource):
         self.resources.append(resource)
-
     @property
     def urls(self):
         urlpatterns = [
@@ -62,20 +63,77 @@ class Register(object):
 
 class SessionRest(Rest):
     def put(self,request,*args,**kwargs):
-        return json_response({'msg':'session put'})
+        data = request.PUT
+        username = data.get('username', '')
+        password = data.get('password', '')
+        # 查询数据库用户表
+        user = authenticate(username=username,password=password)
+        if user:
+            # 保存登陆状态
+            login(request,user)
+            return json_response({
+                "msg":"登陆成功"
+            })
+        else:
+            return params_error({
+                "msg":"用户或密码错误"
+            })
     def delete(self,request,*args,**kwargs):
-        return json_response({'msg':'session delete'})
+        logout(request)
+
+        return json_response({'msg':'退出成功'})
 
 class UserRest(Rest):
     def get(self, request, *args, **kwargs):
-        return json_response({'msg':'user get'})
+        user=request.user
+        if user.is_authenticated:
+            # 获取信息
+            data=dict()
+            if hasattr(user,'custormer'):
+                custome=user.custormer
+                data['username']=custome.username
+                data['email']=custome.email
+                data['user']=user.id
+                data['category']='customer'
+            elif hasattr(user,'userinfo'):
+                userinfo=user.userinfo
+                data['username'] = userinfo.username
+                data['qq'] = userinfo.qq
+                data['user'] = user.id
+                data['category'] ='userinfo'
+            else:
+                return json_response({})
+        else:
+            return not_authenbticated()
+        return json_response(data)
+
     def post(self, request, *args, **kwargs):
-        print('post数据是')
-        print(request.POST)
-        print('http 请求体')
-        data = json.loads(request.body.decode())
-        print(data)
-        return json_response({'msg':'user post'})
+        # 判断用户是否登陆
+        data = request.POST
+        user = request.user
+        if request.user.is_authenticated:
+            # 是否具有某个属性
+            if hasattr(request.user, 'customer'):
+                # data = request.POST
+                customer = user.customer
+                customer.username = data.get('username', '')
+                customer.email = data.get('email', '')
+                customer.save()
+            elif hasattr(request.user, 'userinfo'):
+                # data = request.POST
+                userinfo = user.userinfo
+                userinfo.username = data.get('username', '')
+                userinfo.qq = data.get('qq', '')
+                userinfo.save()
+            else:
+                return json_response({
+                    "msg":"更新成功~~~"
+                })
+        else:
+            return not_authenbticated()
+        return json_response({
+            "msg":"更新成功"
+        })
     def put(self, request, *args, **kwargs):
         data = request.PUT
         username = data.get('username','')
@@ -83,8 +141,8 @@ class UserRest(Rest):
         ensure_password = data.get('ensure_password','')
         regist_code = data.get('regist_code',0)
         session_regist_code=request.session.get('regist_code',1)
-        error = dict()
 
+        error = dict()
         if not username:
             error['username'] = '必须提供用户名'
         else:
@@ -103,20 +161,37 @@ class UserRest(Rest):
         user.set_password(password)
         user.save()
 
-        category = data.get('category','userinfo')
-
-        if category=='userinfo':
-            # 创建普通用户
-            user_obj = UserInfo()
-            user_obj.name = ""
-            user_obj.qq = ""
-        else:
+        category = data.get('category', 'userinfo')
+        if category == 'customer':
             # 创建客户
             user_obj = Custormer()
-            user_obj.name=""
-            user_obj.email=""
+            user_obj.username = username
+            user_obj.email = ""
+            user_obj.company = ""
+            user_obj.address = ""
+            user_obj.phone = ""
+            user_obj.mobile = ""
+            user_obj.qq = ""
+            user_obj.wechat = ""
+            user_obj.web = ""
+            user_obj.industry = ""
+            user_obj.description = ""
 
-        user_obj.user=user
+        else:
+            # 创建普通用户
+            user_obj = UserInfo()
+            user_obj.name = username
+            user_obj.qq = ""
+            user_obj.age = 1
+            user_obj.gender = 1
+            user_obj.phone = ""
+            user_obj.email = ""
+            user_obj.address = ""
+            user_obj.birthday = date(2018,1,1)
+            user_obj.wechat = ""
+            user_obj.job = ""
+            user_obj.salary = ""
+        user_obj.user = user
         user_obj.save()
         print('成功')
         return json_response({'id':user.id})

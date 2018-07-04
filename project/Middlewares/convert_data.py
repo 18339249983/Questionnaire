@@ -7,9 +7,8 @@ from api.utils import params_error
 class ConvertData(MiddlewareMixin):
     def process_request(self, request):
         # 判断是否使用的是get方法，如果是，直接返回
-
-        method=request.method
-        if method=="GET":
+        method = request.method
+        if method == "GET":
             return None
         if 'application/json' in request.content_type:
             try:

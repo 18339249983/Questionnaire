@@ -28,7 +28,7 @@ class UserInfo(models.Model):
     user = models.OneToOneField(User)
     name = models.CharField(default='姓名',max_length=15,null=True,blank=True,help_text='姓名')
     age = models.IntegerField(default=1, help_text='年龄')
-    gender = models.BooleanField(default=True,max_length=18, help_text='性别')
+    gender = models.BooleanField(default=1,max_length=18, help_text='性别')
     phone = models.CharField(default='', max_length=16,blank=True, null=True, help_text="手机号码")
     email = models.EmailField(default='',blank=True,null=True,help_text='邮箱')
     address = models.CharField(default='', max_length=256, blank=True, null=True, help_text="地址")

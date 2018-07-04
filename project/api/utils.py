@@ -18,4 +18,4 @@ def permission_denied():
 
 
 def json_response(data):
-    return HttpResponse(json.dumps(data), status=401, content_type='application/json')
+    return HttpResponse(json.dumps(data), status=200, content_type='application/json')
