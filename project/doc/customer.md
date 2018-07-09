@@ -27,6 +27,7 @@ method:POST
 api: '/api/v1/customer_questionnaire'
 
 body:
+- **id**: 问卷id
 - **title**:问卷标题
 - **expire_date**: 截止时间，格式是：YYYY-MM-DD,例如：2018-10-20
 - **quantity**:数量
@@ -109,5 +110,91 @@ respond：
             ]
         }
     ]
+}
+```
+
+## 问题接口
+
+### 创建问题
+
+method: PUT
+
+api: '/api/v1/customer_question'
+
+body:
+- questionnaire_id: 问卷id
+- title: 问题
+- category： radio或者checkbox
+- **items** ['选项一','选项二'，'选项三']
+
+response：
+```json
+    {
+      "id":1
+    }
+
+```
+
+
+### 更新问题
+
+method: POST
+
+api: '/api/v1/customer_question'
+
+body:
+- id: 问题id
+- title: 问题
+- category： radio或者checkbox
+- **items** ['选项一','选项二'，'选项三']
+
+response：
+```json
+{
+  "msg":"更新成功"
+}
+
+```
+
+
+### 删除问题
+
+method: DELETE
+
+api: '/api/v1/customer_question'
+
+body:
+- **ids**: 问卷id  ids:[1,2,3]
+
+
+response：
+```json
+{
+  "delete_ids":[2,4]
+}
+
+```
+
+
+##  问卷状态
+
+### 修改问卷状态
+
+method:POST
+
+api: '/api/v1/questionnaire_state'
+
+body:
+- **id**: 问卷id
+- **state** 问卷状态
+
+>  本接口用于：
+>- 问卷提交审核：将问卷状态改为1，
+>- 问卷发布：蒋文娟状态改为4
+
+response:
+```json
+{
+  "msg":"修改成功"
 }
 ```
