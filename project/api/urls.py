@@ -7,6 +7,8 @@ from django.conf.urls import url
 
 # 自定义包
 from api.rest import *
+from api.requestion import *
+from api.admin import *
 
 # # 新建一个session对象
 # session_obj=SessionRest()
@@ -22,3 +24,7 @@ api=Register()
 api.regist(SessionRest('session'))
 api.regist(UserRest('user'))
 api.regist(RegistCode())
+api.regist(CustomerQuestionnaire('customer_questionnaire'))
+api.regist(CustomerQuestion('customer_question'))
+api.regist(Questiongnaire_state())
+api.regist(AdminQuersionnaire('questionnaire_comment'))

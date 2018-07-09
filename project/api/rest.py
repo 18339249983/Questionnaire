@@ -1,5 +1,6 @@
 import random
 import json
+from datetime import datetime
 
 from django.http.response import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -10,6 +11,7 @@ from django.contrib.auth import authenticate, logout, login
 
 from api.utils import *
 from myapp.models import *
+from api.decorators import *
 
 class Rest(object):
     def __init__(self, name=None):
@@ -207,3 +209,149 @@ class RegistCode(Rest):
         return json_response({
             'regist_code':regist_code
         })
+
+
+# 问卷操作
+class CustomerQuestionnaire(Rest):
+    @customer_required
+    def get(self, request, *args, **kwargs):
+        # 获取问卷
+        data = request.GET
+        user = request.user.custormer
+        # 创建空字典接受所需信息
+        datas = dict()
+        page = data.get('page',1)
+        limit = data.get('limit',10)
+        status = data.get('status',0)
+        with_detail = data.get('with_detail',False)
+        questionnaire = Questionnaire.objects.all()[(page - 1) * limit: page * limit]
+        id = data.get('id','')
+        # 是否获取单个问卷
+        if id == '':
+            datas['pages']=page
+            datas['count']=limit
+            datas['objs']=[]
+            # questionnaire[(page - 1) * limit: page * limit]
+            detil = dict()
+            for i in questionnaire:
+                detil['id']=i.id
+                detil['title']=i.title
+                detil['quantity']=i.quantity
+                detil['free_quantity']=i.free_count
+                # 时间转换字符串用strftime
+                detil['expire_date']=datetime.strftime(i.deadline, "%Y-%m-%d")
+                detil['create_date']=datetime.strftime(i.create_date, "%Y-%m-%d")
+                detil['status']=i.state
+                detil['customer']=[{
+                    "id": user.id,
+                    "name":""
+                }]
+                if with_detail in ['true', True]:
+                    # 构建问卷下的问题
+                    detil['questions'] = []
+                    for question in i.question_set.all().order_by('index'):
+                        # 构建单个问题
+                        question_dic = dict()
+                        question_dic['id'] = question.id
+                        question_dic['title'] = question.title
+                        question_dic['category'] = question.category
+                        question_dic['index'] = question.index
+                        # 构建问题选项
+                        question_dic['item'] = [{
+                            "id": item.id,
+                            "content": item.content
+                        } for item in question.questionitem_set.all()]
+                        # 将问题添加到问卷的问题列表中
+                        detil['questions'].append(question_dic)
+                    detil['comments'] = [{
+                        'id': item.id,
+                        'create_date': datetime.strftime(item.create_date, '%Y-%m-%d'),
+                        'comment': item.comment
+                    } for item in i.questionnairecomment_set.all()]
+                datas['objs'].append(detil)
+
+        else:
+            questionnaire = Questionnaire.objects.get(id=data.get('id'))
+        return json_response(datas)
+
+
+    @customer_required
+    def post(self, request, *args, **kwargs):
+        # 更新问卷
+        data = request.POST
+        # get返回对象   state__in=[0,2,3]
+        questionnaire = Questionnaire.objects.filter(cusomer=request.user.custormer).get(id=data.get('id'))
+        if questionnaire.state in (0,2,3):
+            questionnaire.title = data.get('title', '未命名')
+            questionnaire.create_date = datetime.strftime(datetime.utcnow(),'%Y-%m-%d')
+            questionnaire.deadline = datetime.strptime(data.get('deadline',''),'%Y-%m-%d')
+            questionnaire.quantity = data.get('quantity')
+            questionnaire.free_count = data.get('quantity', 1)
+            questionnaire.save()
+        else:
+            return json_response({"msg":"该问卷现在不能修改"})
+        return json_response({"id":questionnaire.id})
+
+    @customer_required
+    def put(self, request, *args, **kwargs):
+        # 创建问卷
+        # 获取前端传入数据
+        data = request.PUT
+        # 获取当前用户的信息
+        user = request.user.custormer
+        # 创建问卷对象
+        questionnaire = Questionnaire()
+        # 值得注意， 传入的是个对象
+        questionnaire.cusomer = user
+        questionnaire.title = data.get('title','')
+        # questionnaire.create_date = date(2018,10,10)
+        questionnaire.deadline = datetime.strptime(data.get('deadline',''),'%Y-%m-%d')
+        questionnaire.quantity = 100
+        questionnaire.state = 0
+        questionnaire.free_count = 100
+        questionnaire.save()
+        return json_response({"id":questionnaire.id})
+
+    @customer_required
+    def delete(self,request,*args,**kwargs):
+        # 删除问卷
+        data = request.DELETE
+        # 获取每一个要删除的id
+        if len(data.get('ids')) != 0:
+            for id in data.get('ids'):
+                questionnaire = Questionnaire.objects.filter(cusomer=request.user.custormer.id).get(id=id)
+                questionnaire.delete()
+                return json_response({"delete_ids": data.get('ids')})
+        else:
+            return json_response({"msg":"未选择任何问卷"})
+#questionnaire = Questionnaire.objects.filter(id__in=ids,cusomer=request.user.custormer)
+
+# 问卷状态
+# 提交和发布
+class Questiongnaire_state(Rest):
+    # 更改问卷状态
+    @customer_required
+    def put(self, request, *args, **kwargs):
+        data = request.PUT
+        questionnaire = Questionnaire.objects.get(id=data.get('id'), user=request.user.custormer, state__in=[0,2,3])
+        if questionnaire:
+            questionnaire=questionnaire[0]
+        else:
+            params_error({
+                "msg":"找不到该问卷"
+            })
+        questionnaire.state = data.get('state', 0)
+        questionnaire.save()
+        if data.get('state') == 1:
+            return json_response({
+                "msg":"提交审核成功"
+            })
+        if Questionnaire.state == 3:
+            questionnaire.state = data.get('state')
+            return json_response({
+                "msg": "发布成功"
+            })
+        return params_error({
+            "msg":"此状态不能发布"
+        })
+

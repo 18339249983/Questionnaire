@@ -12,8 +12,8 @@ def customer_required(func):
         return func(self,request, *args, **kwargs)
     return _wrapper
 
-# 登录用户必须为普通用户，只能在类中使用
 
+# 登录用户必须为普通用户，只能在类中使用
 def userinfo_required(func):
     def _wrapper(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
