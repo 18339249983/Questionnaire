@@ -28,7 +28,7 @@ class UserInfo(models.Model):
     user = models.OneToOneField(User)
     name = models.CharField(default='姓名',max_length=15,null=True,blank=True,help_text='姓名')
     age = models.IntegerField(default=1, help_text='年龄')
-    gender = models.BooleanField(default=1,max_length=18, help_text='性别')
+    gender = models.BooleanField(default=True,max_length=18, help_text='性别')
     phone = models.CharField(default='', max_length=16,blank=True, null=True, help_text="手机号码")
     email = models.EmailField(default='',blank=True,null=True,help_text='邮箱')
     address = models.CharField(default='', max_length=256, blank=True, null=True, help_text="地址")
@@ -41,9 +41,9 @@ class UserInfo(models.Model):
 
 # 问卷
 class Questionnaire(models.Model):
-    cusomer =  models.ForeignKey('Custormer', help_text='客户信息')
+    cusomer =  models.ForeignKey('Custormer', help_text='关联客户信息')
     title = models.CharField(default='标题', max_length=64, help_text='标题')
-    create_date = models.DateTimeField(help_text='创建时间')
+    create_date = models.DateTimeField(auto_now=True, help_text='创建时间')
     deadline = models.DateTimeField(help_text='截止时间')
     state = models.IntegerField(default=0, help_text="""状态,0-->草稿,1-->待审核,2-->审核失败,3-->审核成功,4-->发布成功""")
     quantity = models.IntegerField(default=1, help_text='发布数量')
@@ -140,3 +140,16 @@ class Iterm(models.Model):
     userinfo = models.ForeignKey('UserInfo', help_text='关联用户')
     questionItem = models.ForeignKey('QuestionItem', help_text='关联选项')
 
+
+# 用户回答问题题目
+class Answer(models.Model):
+    userinfo = models.ForeignKey('UserInfo', null=True, help_text='关联用户')
+    questionnaire = models.ForeignKey('Questionnaire',help_text='关联问卷')
+    create_date = models.DateTimeField(auto_now=True, help_text='参与时间')
+    is_done = models.BooleanField(default=False, help_text='是否已完成')
+
+# 回答题目选项
+
+class AnswerItem(models.Model):
+    userinfo = models.ForeignKey('UserInfo', null= True, help_text='关联用户')
+    item = models.ForeignKey('QuestionItem', help_text="选项")
