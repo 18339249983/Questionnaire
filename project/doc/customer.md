@@ -198,3 +198,55 @@ response:
   "msg":"修改成功"
 }
 ```
+
+
+
+
+
+
+## 客户发起支付请求
+
+method: PUT
+
+api:'/api/v1/payment'
+
+body:
+- **amount**: //金额
+
+response:
+```json
+{
+  "qrcode":""//支付信息二维码图片的源码
+}
+```
+
+## 客户钱包流水
+
+method: GET
+
+api: '/api/v1/customer_wallet_flow'
+
+body:
+- page: 第几页，默认1
+- limit： 每页数量， 默认10
+- category： 流水类型，false代表消费，true代表支付
+
+
+response:
+```json
+[
+  {
+    "id":1,
+    "create_date":"2018-01-01",
+    "amount":100,
+    "reason":"支付宝扫码支付",
+    "state":false,
+    "category":false
+  }
+]
+
+```
+
+
+
+
