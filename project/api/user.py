@@ -190,3 +190,45 @@ class AnswerQuestionnaireResource(Rest):
         })
 
 
+# 用户查看问卷答案
+class user_answer(Rest):
+    @userinfo_required
+    def get(self, request, *args, **kwargs):
+        # 获取数据
+        data = request.GET
+        userinfo = request.user.userinfo
+        questionnaire_id = data.get('questionnaire_id')
+        # 找到问卷
+        questionnaire = Questionnaire.objects.filter(id=questionnaire_id, userinfo=userinfo, state=4)
+        if not questionnaire:
+            return params_error({
+                "msg":"问卷不存在"
+            })
+        questionnaire = questionnaire[0]
+        has_joined = Answer.objects.filter(userinfo=request.user.userinfo, questionnaire=questionnaire)
+        if not has_joined:
+            return params_error({
+                "msg":"未参与该问卷"
+            })
+        data_ret = dict()
+        data_ret['questionnaire']={
+            "title": questionnaire.title,
+            "expir_date": questionnaire.deadline,
+            "customer": questionnaire.cusomer
+
+        }
+        data_ret['questions']=[{
+            "title": item.title,
+            "category":item.category,
+            "id":item.id,
+            "items": [{
+                "id": item.id,
+                "content": item.content,
+                "is_done": True
+            } for item in item.questionitem_set.all()]
+        } for item in questionnaire.question_set.all()]
+        return json_response(data_ret)
+
+
+
+
